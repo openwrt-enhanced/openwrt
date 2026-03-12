@@ -40,6 +40,7 @@ write_debugfs rate_tries rate_tries 4
 write_debugfs mcs_floor mcs_floor 2
 write_debugfs ampdu_density ampdu_density 4
 write_debugfs coverage_class coverage_class 3
+write_debugfs rx_stbc rx_stbc 1
 
 # Force overrides (only write if explicitly set)
 for opt in force_mcs force_nss force_bw; do
@@ -55,7 +56,7 @@ for opt in amsdu_enable ampdu_enable ampdu_limit max_amsdu_len tx_sw_amsdu; do
 done
 
 # RF & CCA
-for opt in ofdm_sensitivity cck_sensitivity ed_threshold obss_enable rx_stbc; do
+for opt in ofdm_sensitivity cck_sensitivity obss_enable rx_stbc scs_enable; do
 	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
