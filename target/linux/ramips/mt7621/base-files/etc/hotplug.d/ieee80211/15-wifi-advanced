@@ -56,13 +56,13 @@ for opt in amsdu_enable ampdu_enable ampdu_limit max_amsdu_len tx_sw_amsdu; do
 done
 
 # RF & CCA
-for opt in ofdm_sensitivity cck_sensitivity obss_enable rx_stbc scs_enable; do
+for opt in ofdm_sensitivity cck_sensitivity obss_enable scs_enable; do
 	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
 
 # Timing
-for opt in slottime rts_thresh noack; do
+for opt in slottime noack; do
 	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
