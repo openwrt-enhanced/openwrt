@@ -1,0 +1,69 @@
+#!/bin/sh
+# Apply UCI debugfs settings for MT7615N on Netgear R6800
+# Runs every time a WiFi PHY is registered
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "netgear,r6800" ] || exit 0
+
+# Map PHY to radio UCI section
+case "$DEVPATH" in
+	*mt7615e*0000:01*)
+		RADIO="radio0"
+		PHY="phy0"
+		;;
+	*mt7615e*0000:02*)
+		RADIO="radio1"
+		PHY="phy1"
+		;;
+	*)
+		exit 0
+		;;
+esac
+
+DEBUGFS="/sys/kernel/debug/ieee80211/$PHY/mt76"
+
+[ -d "$DEBUGFS" ] || exit 0
+
+write_debugfs() {
+	local file="$1"
+	local uci_opt="$2"
+	local default="$3"
+
+	local val
+	val=$(uci get wireless.${RADIO}.${uci_opt} 2>/dev/null)
+	val="${val:-$default}"
+
+	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$file" 2>/dev/null
+}
+
+# Rate control
+write_debugfs rate_tries rate_tries 4
+write_debugfs mcs_floor mcs_floor 2
+write_debugfs ampdu_density ampdu_density 4
+write_debugfs coverage_class coverage_class 3
+
+# Force overrides (only write if explicitly set)
+for opt in force_mcs force_nss force_bw; do
+	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	[ -n "$val" ] && [ "$val" != "-1" ] && \
+		echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
+done
+
+# Aggregation
+for opt in amsdu_enable ampdu_enable ampdu_limit max_amsdu_len tx_sw_amsdu; do
+	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
+done
+
+# RF & CCA
+for opt in ofdm_sensitivity cck_sensitivity ed_threshold obss_enable; do
+	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
+done
+
+# Timing
+for opt in slottime rts_thresh noack; do
+	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
+done
+
+exit 0
