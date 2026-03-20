@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
@@ -36,16 +36,10 @@ jobs:
           CONFIG_TARGET_ramips_mt7621=y
           CONFIG_TARGET_ramips_mt7621_DEVICE_netgear_r6800=y
           CONFIG_PACKAGE_luci=y
-          CONFIG_PACKAGE_luci-ssl=y
-          CONFIG_PACKAGE_tc-full=y
-          CONFIG_PACKAGE_kmod-sched-cake=y
-          CONFIG_PACKAGE_kmod-ifb=y
-          CONFIG_PACKAGE_sqm-scripts=y
           CONFIG_PACKAGE_luci-app-sqm=y
-          CONFIG_PACKAGE_zram-swap=n
-          CONFIG_PACKAGE_htop=n
-          CONFIG_PACKAGE_nano=n
-          CONFIG_PACKAGE_wget-ssl=n
+          CONFIG_PACKAGE_luci-app-irqbalance=y
+          CONFIG_PACKAGE_luci-app-https-dns-proxy=y
+          CONFIG_PACKAGE_kmod-tcp-bbr=y
           EOF
           make defconfig
 
@@ -56,14 +50,14 @@ jobs:
         run: make -j$(nproc) || make -j1 V=s
 
       - name: Upload sysupgrade image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: r6800-firmware
           path: bin/targets/ramips/mt7621/*netgear_r6800*sysupgrade*
           retention-days: 7
 
       - name: Upload factory image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: r6800-factory
           path: bin/targets/ramips/mt7621/*netgear_r6800*factory*
