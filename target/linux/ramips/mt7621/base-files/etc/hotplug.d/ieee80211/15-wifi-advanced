@@ -1,37 +1,35 @@
 #!/bin/sh
-# Apply UCI debugfs settings for MT7615N on Netgear R6800
-# Runs every time a WiFi PHY is registered
+# Runs at boot when WiFi PHY registers, and can be called manually
 
 [ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "netgear,r6800" ] || exit 0
 
-# Map PHY to radio UCI section
-case "$DEVPATH" in
-	*mt7615e*0000:01*)
-		RADIO="radio0"
-		PHY="phy0"
-		;;
-	*mt7615e*0000:02*)
-		RADIO="radio1"
-		PHY="phy1"
-		;;
-	*)
-		exit 0
-		;;
-esac
+# Allow manual override of PHY and IFACE
+if [ -z "$PHY" ] || [ -z "$IFACE" ]; then
+	case "$DEVPATH" in
+		*mt7615e*0000:01*)
+			IFACE="default_radio0"
+			PHY="phy0"
+			;;
+		*mt7615e*0000:02*)
+			IFACE="default_radio1"
+			PHY="phy1"
+			;;
+		*)
+			exit 0
+			;;
+	esac
+fi
 
 DEBUGFS="/sys/kernel/debug/ieee80211/$PHY/mt76"
-
 [ -d "$DEBUGFS" ] || exit 0
 
 write_debugfs() {
 	local file="$1"
 	local uci_opt="$2"
 	local default="$3"
-
 	local val
-	val=$(uci get wireless.${RADIO}.${uci_opt} 2>/dev/null)
+	val=$(uci get wireless.${IFACE}.${uci_opt} 2>/dev/null)
 	val="${val:-$default}"
-
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$file" 2>/dev/null
 }
 
@@ -44,26 +42,26 @@ write_debugfs rx_stbc rx_stbc 1
 
 # Force overrides (only write if explicitly set)
 for opt in force_mcs force_nss force_bw; do
-	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	val=$(uci get wireless.${IFACE}.${opt} 2>/dev/null)
 	[ -n "$val" ] && [ "$val" != "-1" ] && \
 		echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
 
 # Aggregation
 for opt in amsdu_enable ampdu_enable ampdu_limit max_amsdu_len tx_sw_amsdu; do
-	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	val=$(uci get wireless.${IFACE}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
 
 # RF & CCA
 for opt in ofdm_sensitivity cck_sensitivity obss_enable scs_enable; do
-	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	val=$(uci get wireless.${IFACE}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
 
 # Timing
 for opt in slottime noack; do
-	val=$(uci get wireless.${RADIO}.${opt} 2>/dev/null)
+	val=$(uci get wireless.${IFACE}.${opt} 2>/dev/null)
 	[ -n "$val" ] && echo "$val" > "$DEBUGFS/$opt" 2>/dev/null
 done
 
