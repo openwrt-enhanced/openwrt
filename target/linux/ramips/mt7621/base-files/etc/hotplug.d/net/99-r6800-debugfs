@@ -1,0 +1,18 @@
+#!/bin/sh
+# Triggers on every wifi reload, not just boot
+
+[ "$ACTION" = "ifup" ] || exit 0
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "netgear,r6800" ] || exit 0
+
+case "$INTERFACE" in
+	radio0*|default_radio0*)
+		sleep 5
+		PHY="phy0" IFACE="default_radio0" sh /etc/hotplug.d/ieee80211/15-wifi-advanced
+		;;
+	radio1*|default_radio1*)
+		sleep 5
+		PHY="phy1" IFACE="default_radio1" sh /etc/hotplug.d/ieee80211/15-wifi-advanced
+		;;
+esac
+
+exit 0
